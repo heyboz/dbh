@@ -2,38 +2,60 @@
 """
 Created on Sun Sep 11 12:50:28 2016
 
-@author: Administrator
+@author: Zheyi
 """
 
 import numpy as np
-import scipy as sp
 import pandas as pd
 import scipy.spatial
 import matplotlib.pyplot as plt
+import matplotlib
+#matplotlib.use('Agg') 
+#import networkx as nx
 
+def branch_unique(dbhdf_species):  
+    #only the bigest branch for each tag
+    dbh_unique = dbhdf.groupby('tag', sort = False).apply(lambda t: t[t.dbh==t.dbh.max()])
+    dbh_unique.index = range(len(dbh_unique))
+    dbh_unique.index.name = 'No'
+    return dbh_unique#dataframe
+
+def trees_distance(dbh_unique):
+    #distance matrix
+    X = np.array([ dbh_unique['gx'], dbh_unique['gy'] ]).T
+    D = scipy.spatial.distance_matrix(X, X)
+    return D#array
+
+def cluster_size(dbh_unique, D, dbh_threshold, distance_threshold):
+    bigers = dbh_unique[dbh_unique['dbh'] > dbh_threshold]
+    clusters = {}
+    cluster_size = []
+    for i in bigers.index:
+        cluster = D[i][D[i] < distance_threshold]
+        clusters[i] = cluster
+        cluster_size.append(len(cluster))
+
+    n, bins, patches = plt.hist(cluster_size, bins=30)
+    plt.xlabel('Cluster Size')
+    plt.ylabel('Frequency')
+    plt.title('Cluster Size Distribution_'+sp)
+    figname1 = 'Cluster_Size_'+sp+'_dbh'+str(dbh_threshold)+'_distance'+str(distance_threshold)+'.png'
+    plt.savefig('C:\Users\Administrator\Documents\GitHub\dbh\ClusterSize\\'+ figname1)
+    
+    n, bins, patches = plt.hist(dbh_unique['dbh'], bins=30)
+    plt.xlabel('DBH')
+    plt.ylabel('Frequency')
+    plt.title('Histogram of DBH_'+sp+'(biggest branches only)')
+    figname2 = 'DBH_'+sp+'.png'
+    plt.savefig('C:\Users\Administrator\Documents\GitHub\dbh\DBH\\'+ figname2)
+    return clusters
+    
 #read data
-df = pd.read_csv('HSD_plot.csv')
+df = pd.read_csv('C:\Users\Administrator\Documents\GitHub\dbh\HSD_plot.csv')
 df1 = df[['sp.code', 'tag', 'dbh', 'gx', 'gy']]
-dbh_ADF = df1[df1['sp.code'] == 'MYTLAO']
-dbhdf = dbh_ADF
-
-#only the bigest branch for each tag
-dbh_unique = dbhdf.groupby('tag', sort = False).apply(lambda t: t[t.dbh==t.dbh.max()])
-
-#distance matrix
-X = np.array([ dbh_unique['gx'], dbh_unique['gy'] ]).T
-D = sp.spatial.distance_matrix(X, X)
-
-#define big trees according to dbh
-n, bins, patches = plt.hist(dbh_unique['dbh'], bins=30)
-plt.xlabel('DBH')
-plt.ylabel('frequency')
-plt.title('Histogram of DBH(the bigest branches only)')
-plt.show()
-
-n, bins, patches = plt.hist(dbh_ADF['dbh'], bins=30)
-plt.xlabel('DBH')
-plt.ylabel('frequency')
-plt.title('Histogram of DBH')
-plt.show()
-
+species = np.unique(df1['sp.code'])
+for sp in species[:2]:
+    dbhdf = df1[df1['sp.code'] == sp]
+    dbh_unique = branch_unique(dbhdf)
+    D = trees_distance(dbh_unique)
+    clusters = cluster_size(dbh_unique, D, 20, 50)
