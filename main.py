@@ -40,22 +40,25 @@ def cluster_size(dbh_unique, D, dbh_threshold, distance_threshold):
     plt.ylabel('Frequency')
     plt.title('Cluster Size Distribution_'+sp)
     figname1 = 'Cluster_Size_'+sp+'_dbh'+str(dbh_threshold)+'_distance'+str(distance_threshold)+'.png'
-    plt.savefig('C:\Users\Administrator\Documents\GitHub\dbh\ClusterSize\\'+ figname1)
+    plt.savefig('ClusterSize/qiaomu/' + figname1)
+    plt.clf()
     
     n, bins, patches = plt.hist(dbh_unique['dbh'], bins=30)
     plt.xlabel('DBH')
     plt.ylabel('Frequency')
     plt.title('Histogram of DBH_'+sp+'(biggest branches only)')
     figname2 = 'DBH_'+sp+'.png'
-    plt.savefig('C:\Users\Administrator\Documents\GitHub\dbh\DBH\\'+ figname2)
+    plt.savefig('DBH/qiaomu/' + figname2)
+    plt.clf()
     return clusters
     
 #read data
-df = pd.read_csv('C:\Users\Administrator\Documents\GitHub\dbh\HSD_plot.csv')
+df = pd.read_csv('HSD_plot_qiaomu.csv')
 df1 = df[['sp.code', 'tag', 'dbh', 'gx', 'gy']]
 species = np.unique(df1['sp.code'])
-for sp in species[:2]:
+for sp in species:
     dbhdf = df1[df1['sp.code'] == sp]
     dbh_unique = branch_unique(dbhdf)
     D = trees_distance(dbh_unique)
     clusters = cluster_size(dbh_unique, D, 20, 50)
+    print sp
