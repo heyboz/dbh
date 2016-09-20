@@ -41,7 +41,7 @@ def cluster_size(dbh_unique, D, dbh_threshold, distance_threshold):
     plt.ylabel('Frequency')
     plt.title('Cluster Size Distribution_'+sp)
     figname1 = sp+'_Cluster_Size'+'_dbh'+str(dbh_threshold)+'_distance'+str(distance_threshold)+'.png'
-    plt.savefig('ClusterSize/qiaomu/' + figname1)
+    plt.savefig('ClusterSize/dbhsort/' + figname1)
     plt.clf()
     
     plt.figure(figsize=(4,3))    
@@ -49,14 +49,14 @@ def cluster_size(dbh_unique, D, dbh_threshold, distance_threshold):
     plt.xlabel('DBH')
     plt.ylabel('Frequency')
     plt.title('Histogram of DBH_'+sp+'(biggest branches only)')
-    plt.savefig('DBH/qiaomu/' + sp+'_DBH'+'.png')
+    plt.savefig('DBH/dbhsort/' + sp+'_DBH'+'.png')
     plt.clf()
     
-    plt.figure(figsize=(16,12))
+    plt.figure(figsize=(12,9))
     sizes = (dbh_unique['dbh']**2) / (4 * 3.14159)
     colors = 1 * (dbh_unique['dbh']>20)
     plt.scatter(dbh_unique['gx'], dbh_unique['gy'], s=sizes, c=colors, alpha=0.7)   
-    plt.savefig('Location/qiaomu/' + sp+'_Location'+'.png')
+    plt.savefig('Location/dbhsort/' + sp+'_Location'+'.png')
     plt.clf()
     return clusters
     
@@ -67,9 +67,15 @@ df1 = df[['sp.code', 'tag', 'dbh', 'gx', 'gy']]
 species, counts = np.unique(df1['sp.code'], return_counts=True)
 species_c = pd.Series(counts, species)
 species_c = species_c.sort_values()
-species_sorted = species_sorted.index
+species_sorted = species_c.index
+#sorted by maximal dbh
+sp_maxdbh = df1.groupby('sp.code', sort = False).apply(lambda t: t[t.dbh==t.dbh.max()])
+sp_maxdbh = np.unique(sp_maxdbh)
+sp_maxdbh_sorted = sp_maxdbh.sort('dbh')
 #
-for sp in species_sorted:
+
+#for sp in species_sorted:
+for sp in sp_maxdbh_sorted:
     dbhdf = df1[df1['sp.code'] == sp]
     dbh_unique = branch_unique(dbhdf)
     D = trees_distance(dbh_unique)
