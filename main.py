@@ -41,24 +41,24 @@ def cluster_size(dbh_unique, D, dbh_threshold, distance_threshold):
     plt.ylabel('Frequency')
     plt.title('Cluster Size Distribution_'+sp)
     figname1 = sp+'_Cluster_Size'+'_dbh'+str(dbh_threshold)+'_distance'+str(distance_threshold)+'.png'
-    plt.savefig('ClusterSize/dbhsort/' + figname1)
-    plt.clf()
+    plt.savefig('ClusterSize/threshold/' + figname1)
+    plt.close()
     
     plt.figure(figsize=(4,3))    
     n, bins, patches = plt.hist(dbh_unique['dbh'], bins=30)
     plt.xlabel('DBH')
     plt.ylabel('Frequency')
     plt.title('Histogram of DBH_'+sp+'(biggest branches only)')
-    plt.savefig('DBH/dbhsort/' + sp+'_DBH'+'.png')
-    plt.clf()
+    plt.savefig('DBH/threshold/' + sp+'_DBH'+'.png')
+    plt.close()
     
     plt.figure(figsize=(12,9))
     sizes = (dbh_unique['dbh']**2) / (4 * 3.14159)
-    colors = 1 * (dbh_unique['dbh']>20)
+    colors = 1 * (dbh_unique['dbh']>dbh_threshold)
     plt.scatter(dbh_unique['gx'], dbh_unique['gy'], s=sizes, c=colors, alpha=0.7)   
-    plt.savefig('Location/dbhsort/' + sp+'_Location'+'.png')
-    plt.clf()
-    return clusters
+    plt.savefig('Location/threshold/' + sp+'_Location'+'.png')
+    plt.close()
+    #return clusters
     
 #read data
 df = pd.read_csv('HSD_plot_qiaomu.csv')
@@ -69,15 +69,17 @@ species_c = pd.Series(counts, species)
 species_c = species_c.sort_values()
 species_sorted = species_c.index
 #sorted by maximal dbh
-sp_maxdbh = df1.groupby('sp.code', sort = False).apply(lambda t: t[t.dbh==t.dbh.max()])
-sp_maxdbh = np.unique(sp_maxdbh)
-sp_maxdbh_sorted = sp_maxdbh.sort('dbh')
+#sp_maxdbh = df1.groupby('sp.code', sort = False).apply(lambda t: t[t.dbh==t.dbh.max()])
+#sp_maxdbh = sp_maxdbh.drop_duplicates(subset="sp.code")
+#sp_maxdbh_sorted = sp_maxdbh.sort(columns='dbh', axis=0)['sp.code']
 #
 
-#for sp in species_sorted:
-for sp in sp_maxdbh_sorted:
+for sp in species_sorted:
+#for sp in sp_maxdbh_sorted:
     dbhdf = df1[df1['sp.code'] == sp]
     dbh_unique = branch_unique(dbhdf)
     D = trees_distance(dbh_unique)
-    clusters = cluster_size(dbh_unique, D, 20, 50)
+    dbh_threshold = dbhdf['dbh'].quantile(.75)
+    distance_threshold = dbh_threshold * (5/2)
+    clusters = cluster_size(dbh_unique, D, dbh_threshold, distance_threshold)
     print sp
