@@ -40,12 +40,11 @@ for sp in species_sorted:
     A = np.array([ np.array(adults['gx']), np.array(adults['gy']) ]).T
     C = np.array([ np.array(children['gx']), np.array(children['gy']) ]).T
     D = scipy.spatial.distance_matrix(C, A)#axis1: distances from all adults of the focal child
-    
     mom = np.argmin(D, axis=1)#find the nearest adult from the focal child and as its mom 
     dist_from_mom = np.min(D,axis=1)#store distance information in a array with the same structure as the mom array
     
     #establish clusters in dictionary
-    index_mom, cluster_size = np.unique(mom, return_counts = True)
+    index_mom, counts = np.unique(mom, return_counts = True)
     Clusters = {}
     Distances = {}
     for i in range(len(children)):
@@ -56,26 +55,44 @@ for sp in species_sorted:
     ###visiulize cluster structure
     ###point out mothers and children in HSD map if it possible
     
-    #show cluster size distribution
-    Fig = plt.figure(figsize = (8,13.5))
-    Ax1 = Fig.add_subplot(311)
-    Ax2 = Fig.add_subplot(312)
-    Ax3 = Fig.add_subplot(313)
+    cluster_size = [len(Clusters.values()[i]) for i in range(len(index_mom))]
     
-    n, bins, patches = Ax1.hist(cluster_size, bins=50)
-    Ax1.set_xlabel('Cluster Size')
-    Ax1.set_ylabel('Frequency')
-    Ax1.set_title('Cluster Size Distribution_'+sp)
+    #show cluster size distribution
+    Fig = plt.figure(figsize = (32,18))
+    Ax1 = Fig.add_subplot(221)
+    Ax2 = Fig.add_subplot(222)
+    Ax3 = Fig.add_subplot(223)
+    Ax4 = Fig.add_subplot(224)
+    Ax4.set_xlim(0,1000)
+    Ax4.set_ylim(0,500)
+    
+    fontsize = 24
+    t = 4
+    
+    n, bins, patches = Ax1.hist(cluster_size, bins=50, color='cadetblue', normed=True)
+    Ax1.set_xlabel('Cluster Size', fontsize=fontsize)
+    Ax1.set_ylabel('Frequency', fontsize=fontsize)
+    Ax1.set_title('Cluster Size Distribution - '+sp, fontsize=fontsize+t)
 
-    n, bins, patches = Ax2.hist(dbh_unique['dbh'], bins=50)
-    Ax2.set_xlabel('DBH')
-    Ax2.set_ylabel('Frequency')
-    Ax2.set_title('Histogram of DBH_'+sp+'(biggest branches only)')
-
-    sizes = (dbh_unique['dbh']**2) / (4 * 3.14159)
-    colors = 1 * (dbh_unique['dbh']>dbh_threshold)
-    Ax3.scatter(dbh_unique['gx'], dbh_unique['gy'], s=sizes, c=colors, alpha=0.7)
-    Ax3.set_title('Trees Map')
+    n, bins, patches = Ax2.hist(dbh_unique['dbh'], bins=50, color='steelblue', normed=True)
+    Ax2.set_xlabel('DBH', fontsize=fontsize)
+    Ax2.set_ylabel('Frequency', fontsize=fontsize)
+    Ax2.set_title('Histogram of DBH - '+sp+'(biggest branches only)', fontsize=fontsize+t)
+    
+    n, bins, patches = Ax3.hist(Distances.values(), bins=50, normed=True)
+    Ax3.set_xlabel('Distance', fontsize=fontsize)
+    Ax3.set_ylabel('Frequency', fontsize=fontsize)
+    Ax3.set_title('Distance Distribution Which from Children to Their Mom', fontsize=fontsize+t)
+    
+    sizes = (dbh_unique['dbh']/2)**2
+    #colors = 1 * (dbh_unique['dbh']<=dbh_threshold)
+    colors = 1 * (dbh_unique['dbh']<=dbh_threshold)
+    Ax4.scatter(dbh_unique['gx'], dbh_unique['gy'], s=sizes, c=colors, alpha=0.7, edgecolors='none', cmap='Spectral')
+    Ax4.set_xlabel('X', fontsize=fontsize)
+    Ax4.set_ylabel('Y', fontsize=fontsize)
+    Ax4.set_title('Trees Map - ' + sp, fontsize=fontsize+t)
+    
+    plt.tight_layout(pad=8, w_pad=2, h_pad=2)
 
     figname1 = sp+'_Cluster_Size'+'_dbh'+str(dbh_threshold)+'.png'
     Fig.savefig('E:/Outputs/Cluster/nearest/' + figname1)
