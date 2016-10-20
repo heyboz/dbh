@@ -30,6 +30,7 @@ def cluster_size(dbh_unique, D, dbh_threshold, distance_threshold):
     for i in bigers.index:
         cluster = D[i][D[i] < distance_threshold]
         clusters[i] = cluster
+<<<<<<< HEAD
         cluster_size[i] = len(cluster)
    
     n, bins, patches = plt.hist(cluster_size, bins=30, color='steelblue')
@@ -54,6 +55,32 @@ def cluster_size(dbh_unique, D, dbh_threshold, distance_threshold):
     plt.set_title(sp+'_Plot')
     figname3 = str(dbh_threshold)+'dbh_'+'Location_'+sp+'.png'
     plt.savefig('E:/Outputs/Cluster/threshold0.9/Location/' + figname3)
+=======
+        cluster_size.append(len(cluster))
+
+    plt.figure(figsize=(4,3))
+    n, bins, patches = plt.hist(cluster_size, bins=30)
+    plt.xlabel('Cluster Size')
+    plt.ylabel('Frequency')
+    plt.title('Cluster Size Distribution_'+sp)
+    figname1 = sp+'_Cluster_Size'+'_dbh'+str(dbh_threshold)+'_distance'+str(distance_threshold)+'.png'
+    plt.savefig('E:/Outputs/Cluster/threshold/ClusterSize/' + figname1)
+    plt.close()
+    
+    plt.figure(figsize=(4,3))    
+    n, bins, patches = plt.hist(dbh_unique['dbh'], bins=30)
+    plt.xlabel('DBH')
+    plt.ylabel('Frequency')
+    plt.title('Histogram of DBH_'+sp+'(biggest branches only)')
+    plt.savefig('E:/Outputs/Cluster/threshold/DBH/' + sp+'_DBH'+'.png')
+    plt.close()
+    
+    plt.figure(figsize=(16,12))
+    sizes = (dbh_unique['dbh']**2) / (4 * 3.14159)
+    colors = 1 * (dbh_unique['dbh']>dbh_threshold)
+    plt.scatter(dbh_unique['gx'], dbh_unique['gy'], s=sizes, c=colors, alpha=0.7)   
+    plt.savefig('E:/Outputs/Cluster/threshold/Location/' + sp+'_Location'+'.png')
+>>>>>>> origin/master
     plt.close()
     #return clusters
     
