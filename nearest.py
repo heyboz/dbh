@@ -16,14 +16,15 @@ df1 = df[['sp.code', 'tag', 'dbh', 'gx', 'gy']]
 #sorted by species aboundance
 species, counts = np.unique(df1['sp.code'], return_counts=True)
 species_c = pd.Series(counts, species)
-species_c = species_c.sort_values()
+species_c = species_c.sort_values(ascending = False)
 species_sorted = species_c.index
 #sorted by maximal dbh
 #sp_maxdbh = df1.groupby('sp.code', sort = False).apply(lambda t: t[t.dbh==t.dbh.max()])
 #sp_maxdbh = sp_maxdbh.drop_duplicates(subset="sp.code")
 #sp_maxdbh_sorted = sp_maxdbh.sort(columns='dbh', axis=0)['sp.code']
 
-for sp in species_sorted:
+#for sp in species[:5]:
+for sp in species_sorted[:21]:
     dbhdf = df1[df1['sp.code'] == sp]
     #biggest branch only
     dbh_unique = dbhdf.groupby('tag', sort = False).apply(lambda t: t[t.dbh==t.dbh.max()])
@@ -35,7 +36,7 @@ for sp in species_sorted:
     adults = dbh_unique[dbh_unique['dbh'] > dbh_threshold]
     children = dbh_unique[dbh_unique['dbh'] <= dbh_threshold]
     print 'adults: ', len(adults), 'children: ', len(children), 'species: ', sp
-    if len(adults) == 0 or len(children) == 0:
+    if (len(adults) * len(children)) == 0 or (len(adults) + len(children)) < 50:
         continue
     A = np.array([ np.array(adults['gx']), np.array(adults['gy']) ]).T
     C = np.array([ np.array(children['gx']), np.array(children['gy']) ]).T
@@ -55,45 +56,56 @@ for sp in species_sorted:
     ###visiulize cluster structure
     ###point out mothers and children in HSD map if it possible
     
-    cluster_size = [len(Clusters.values()[i]) for i in range(len(index_mom))]
+    cluster_size = [len(Clusters[index_mom[i]]) for i in range(len(index_mom))]
+    cluster_size_list = [[len(Clusters[index_mom[i]])]*len(Clusters[index_mom[i]]) for i in range(len(index_mom))]
+    c = [y for x in cluster_size_list for y in x]
+    dist = [Distances[index_mom[i]] for i in range(len(index_mom))]    
+    d = [y for x in dist for y in x]
     
     #show cluster size distribution
-    Fig = plt.figure(figsize = (32,18))
-    Ax1 = Fig.add_subplot(221)
-    Ax2 = Fig.add_subplot(222)
-    Ax3 = Fig.add_subplot(223)
-    Ax4 = Fig.add_subplot(224)
-    Ax4.set_xlim(0,1000)
-    Ax4.set_ylim(0,500)
+    Fig = plt.figure(figsize = (32,27))
+    Ax1 = Fig.add_subplot(321)
+    Ax2 = Fig.add_subplot(322)
+    Ax3 = Fig.add_subplot(323)
+    Ax4 = Fig.add_subplot(324)
+    Ax5 = Fig.add_subplot(325)
+    Ax5.set_xlim(0,1000)
+    Ax5.set_ylim(0,500)
+    Ax4.set_xlim(0,max(c))
+    Ax4.set_ylim(0,max(d))
     
     fontsize = 24
     t = 4
     
-    n, bins, patches = Ax1.hist(cluster_size, bins=50, color='cadetblue', normed=True)
+    n, bins, patches = Ax1.hist(cluster_size, bins=round(max(cluster_size)), color='cadetblue')
     Ax1.set_xlabel('Cluster Size', fontsize=fontsize)
     Ax1.set_ylabel('Frequency', fontsize=fontsize)
-    Ax1.set_title('Cluster Size Distribution - '+sp, fontsize=fontsize+t)
+    #Ax1.set_title('Cluster Size Distribution - '+sp, fontsize=fontsize+t)
 
-    n, bins, patches = Ax2.hist(dbh_unique['dbh'], bins=50, color='steelblue', normed=True)
+    n, bins, patches = Ax2.hist(dbh_unique['dbh'], bins=round(max(dbh_unique['dbh'])), color='steelblue')
     Ax2.set_xlabel('DBH', fontsize=fontsize)
     Ax2.set_ylabel('Frequency', fontsize=fontsize)
-    Ax2.set_title('Histogram of DBH - '+sp+'(biggest branches only)', fontsize=fontsize+t)
-    
-    n, bins, patches = Ax3.hist(Distances.values(), bins=50, normed=True)
-    Ax3.set_xlabel('Distance', fontsize=fontsize)
+    #Ax2.set_title('Histogram of DBH - '+sp+'(biggest branches only)', fontsize=fontsize+t)
+       
+    n, bins, patches = Ax3.hist(d, bins=round(max(d)/5), color='silver')
+    Ax3.set_xlabel('Distance From Children to Their Mom', fontsize=fontsize)
     Ax3.set_ylabel('Frequency', fontsize=fontsize)
-    Ax3.set_title('Distance Distribution Which from Children to Their Mom', fontsize=fontsize+t)
+    #Ax3.set_title('Distance Distribution Which from Children to Their Mom', fontsize=fontsize+t)
+    
+    Ax4.scatter(c, d, c='midnightblue', s=10, edgecolors='none')
+    Ax4.set_xlabel('Cluster Size', fontsize=fontsize)
+    Ax4.set_ylabel('Distance From Children to Their Mom', fontsize=fontsize)    
     
     sizes = (dbh_unique['dbh']/2)**2
     #colors = 1 * (dbh_unique['dbh']<=dbh_threshold)
     colors = 1 * (dbh_unique['dbh']<=dbh_threshold)
-    Ax4.scatter(dbh_unique['gx'], dbh_unique['gy'], s=sizes, c=colors, alpha=0.7, edgecolors='none', cmap='Spectral')
-    Ax4.set_xlabel('X', fontsize=fontsize)
-    Ax4.set_ylabel('Y', fontsize=fontsize)
-    Ax4.set_title('Trees Map - ' + sp, fontsize=fontsize+t)
+    Ax5.scatter(dbh_unique['gx'], dbh_unique['gy'], s=sizes, c=colors, alpha=0.7, edgecolors='none', cmap='Spectral')
+    Ax5.set_xlabel('X', fontsize=fontsize)
+    Ax5.set_ylabel('Y', fontsize=fontsize)
+    Ax5.set_title('Trees Map - ' + sp, fontsize=fontsize+t)
     
     plt.tight_layout(pad=8, w_pad=2, h_pad=2)
 
     figname1 = sp+'_Cluster_Size'+'_dbh'+str(dbh_threshold)+'.png'
-    Fig.savefig('E:/Outputs/Cluster/nearest/' + figname1)
+    Fig.savefig('E:/Outputs/Cluster/nearest/nearest_cd20/' + figname1)
     plt.close()
