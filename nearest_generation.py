@@ -10,7 +10,6 @@ import pandas as pd
 import scipy.spatial
 import matplotlib.pyplot as plt
 import random
-from __future__ import division
 
 #read data
 df = pd.read_csv('HSD_plot_qiaomu.csv')
@@ -25,20 +24,20 @@ species_sorted = species_c.index
 #sp_maxdbh = sp_maxdbh.drop_duplicates(subset="sp.code")
 #sp_maxdbh_sorted = sp_maxdbh.sort(columns='dbh', axis=0)['sp.code']
 
-def nullmodel(rawdata, dbh_adultRatio, dbh_distribution=False, spacial=False):
-    if dbh_adultRatio != 0:
-        a = int(len(rawdata)*dbh_adultRatio)
+def nullmodel(rawdata, dbhr=False, dbhdistribution=False, spacialr=False, spacialdistribution=False):
+    if dbhr == True:
+        a = len(rawdata)*
         dbhr = [1]*len(rawdata)    
-        for i in range(a):
-            dbhr[i] = random.uniform(10, max(rawdata['dbh']))
-        for i in range(a+1, len(rawdata)):
+        for i in range(len(rawdata)*(1/50)):
             dbhr[i] = random.uniform(0, 10)
+        for i in range(len(rawdata)*49/50):
+            dbhr[i] = random.uniform(10, max(rawdata['dbh']))
         rawdata['dbh'] = dbhr
-    if dbh_distribution == True:
+    if dbhdistribution == True:
         dbhd = rawdata['dbh'][:]
         random.shuffle(dbhd)
         rawdata['dbh'] = dbhd
-    if spacial == True:
+    if spacialr == True:
         xr = [1]*len(rawdata)
         yr = [0]*len(rawdata)
         for i in range(len(rawdata)):
@@ -46,10 +45,16 @@ def nullmodel(rawdata, dbh_adultRatio, dbh_distribution=False, spacial=False):
             yr[i] = random.uniform(0, 500)
         rawdata['gx'] = xr
         rawdata['gy'] = yr
+    if spacialdistribution == True:
+        sdx = rawdata['gx'][:]
+        sdy = rawdata['gy'][:]
+        random.shuffle(sdx)
+        random.shuffle(sdy)
+        rawdata['gx'] = sdx
+        rawdata['gy'] = sdy
     return rawdata
 
-adultRatio = {}
-for sp in species_sorted:
+for sp in species_sorted[:1]:
     dbhdf = df1[df1['sp.code'] == sp]
     
     #biggest branch only
@@ -57,18 +62,13 @@ for sp in species_sorted:
     dbh_unique0.index = range(len(dbh_unique0))
     dbh_unique0.index.name = 'No' 
     
-    dbh_unique = nullmodel(rawdata=dbh_unique0, dbh_adultRatio=0, spacial=False)
+    dbh_unique = nullmodel(rawdata=dbh_unique0, dbhr=True, spacialdistribution=True)
     
     #find nearest mom
     dbh_threshold = 10
     adults = dbh_unique[dbh_unique['dbh'] > dbh_threshold]
     children = dbh_unique[dbh_unique['dbh'] <= dbh_threshold]
     print 'adults: ', len(adults), 'children: ', len(children), 'species: ', sp
-    adultRatio[sp] = len(adults)/len(dbh_unique)
-    
-    n, bins, patches = plt.hist(adultRatio.values(), bins=10, color='cadetblue')
-    plt.savefig('E:/Outputs/Cluster/' + 'adultRatio_all.png')
-    
     if (len(adults) * len(children)) == 0 or (len(adults) + len(children)) < 50:
         continue
     A = np.array([ np.array(adults['gx']), np.array(adults['gy']) ]).T
@@ -144,6 +144,6 @@ for sp in species_sorted:
     
     plt.tight_layout(pad=8, w_pad=2, h_pad=2)
 
-    figname1 = sp+'_Cluster_Size'+'_dbh'+str(dbh_threshold)+'_0.05adult'+'.png'
-    Fig.savefig('E:/Outputs/Cluster/nearest/null_model/nearest_generation/0.05adult/' + figname1)
+    figname1 = sp+'_Cluster_Size'+'_dbh'+str(dbh_threshold)+'_500children'+'.png'
+    Fig.savefig('E:/Outputs/Cluster/nearest/nearest_generation/' + figname1)
     plt.close()
